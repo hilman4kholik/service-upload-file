@@ -17,6 +17,9 @@ Cara menjalankan program:
 ```
 python3 fileserver.py
 ```
+buka localhost:8188 di browser
+
+<img width="430" alt="Screen Shot 2022-07-29 at 15 07 12" src="https://user-images.githubusercontent.com/5362063/181714158-60e18c55-9f95-485d-a2d9-3699a24f9359.png">
 
 ## Untuk testnya
 
