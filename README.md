@@ -21,6 +21,13 @@ buka localhost:8188 di browser
 
 <img width="430" alt="Screen Shot 2022-07-29 at 15 07 12" src="https://user-images.githubusercontent.com/5362063/181714158-60e18c55-9f95-485d-a2d9-3699a24f9359.png">
 
+Cara akses file yang telah diupload:
+
+```
+http://localhost:8188/{namafilenya}
+```
+
+
 ## Untuk testnya
 
 1. Sesuaikan isi file request_send.py lalu jalankan.
