@@ -61,14 +61,10 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
         """Serve a POST request."""
         r, info = self.deal_post_data()
-        # print((r, info, "by: ", self.client_address))
+
         f = BytesIO()
-        if r:
-            f.write(b"OK;")
-        else:
-            f.write(b"Failed;")
-        f.write(info.encode())
-        # f.write(b"</body>\n</html>\n")
+        f.write(bytes(info, "utf-8"))
+
         length = f.tell()
         f.seek(0)
         self.send_response(200)
@@ -80,20 +76,29 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             f.close()
         
     def deal_post_data(self):
+        key = "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
+        
+        """for authorization"""
+        # if self.headers.get('Authorizetion') != key:
+        #     return (False, "{\"response_status\": \"401\",\"response_message\": \"Unauthorized\", \"data\": {\"msg\": \"Access denied!\"}}")
+
         content_type = self.headers['content-type']
         if not content_type:
-            return (False, "Content-Type header doesn't contain boundary")
+            return (False, "{\"response_status\": \"403\",\"response_message\": \"Error\", \"data\": {\"msg\": \"Content-Type header doesn't contain boundary\"}}")
+        
         boundary = content_type.split("=")[1].encode()
         remainbytes = int(self.headers['content-length'])
         line = self.rfile.readline()
         remainbytes -= len(line)
         if not boundary in line:
-            return (False, "Content NOT begin with boundary")
+            return (False, "{\"response_status\": \"403\",\"response_message\": \"Error\", \"data\": {\"msg\": \"Content NOT begin with boundary\"}}")
+
         line = self.rfile.readline()
         remainbytes -= len(line)
         fn = re.findall(r'Content-Disposition.*name="file"; filename="(.*)"', line.decode())
         if not fn:
-            return (False, "Can't find out file name...")
+            return (False, "{\"response_status\": \"403\",\"response_message\": \"Error\", \"data\": {\"msg\": \"Can't find out file name...\"}}")
+
         path = self.translate_path(self.path)
         fName = fn[0]
         fn = os.path.join(path, fn[0])
@@ -104,8 +109,7 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         try:
             out = open(fn, 'wb')
         except IOError:
-            # return (False, "Can't create file to write, do you have permission to write?")
-            return (True, "{\"response_status\": \"00\",\"response_message\": \"Success\", \"data\": {\"msg\": \"Can't create file to write\"}}")
+            return (False, "{\"response_status\": \"403\",\"response_message\": \"Error\", \"data\": {\"msg\": \"Can't create file to write\"}}")
                 
         preline = self.rfile.readline()
         remainbytes -= len(preline)
@@ -118,12 +122,12 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                     preline = preline[0:-1]
                 out.write(preline)
                 out.close()
-                # return (True, "File '%s' upload success!" % fName)
                 return (True, "{\"response_status\": \"00\",\"response_message\": \"Success\", \"data\": {\"msg\": \"%s\"}}" % fName)
             else:
                 out.write(preline)
                 preline = line
-        return (False, "Unexpect Ends of data.")
+        return (False, "{\"response_status\": \"403\",\"response_message\": \"Error\", \"data\": {\"msg\": \"Unexpect Ends of data\"}}")
+        
  
     def send_head(self):
         """Common code for GET and HEAD commands.
