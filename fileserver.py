@@ -26,6 +26,24 @@ from io import BytesIO
 import configparser
 from socketserver import ThreadingMixIn
 from http.server import SimpleHTTPRequestHandler, HTTPServer
+import json
+from threading import Thread
+from urllib import request, error
+from datetime import datetime
+
+class Capture(Thread):
+    def __init__(self, gate_name, url):
+        Thread.__init__(self)
+        self.file_name = f"{gate_name}{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
+        self.url = url
+
+    def run(self):
+        try:
+            request.urlretrieve(self.url, self.file_name)
+            print('capturing success!')
+        except error.URLError as e: ResponseData = print(e)
+        except NameError:
+            print('Gagal mengambil gambar!')
 
 class ThreadingServer(ThreadingMixIn, HTTPServer):
     pass
@@ -81,6 +99,24 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         """for authorization"""
         # if self.headers.get('Authorizetion') != key:
         #     return (False, "{\"response_status\": \"401\",\"response_message\": \"Unauthorized\", \"data\": {\"msg\": \"Access denied!\"}}")
+
+        if "capture" in self.path:
+            """
+                #For payload
+
+
+                {
+                    "gate":"M01",
+                    "url":"http://192.168.1.88/tmpfs/snap.jpg?usr=admin&pwd=admin"
+                }
+            """
+
+            length = int(self.headers['content-length'])
+            payload = json.loads(self.rfile.read(length))
+            getCapture = Capture(payload["gate"], payload["url"])
+            getCapture.start()
+            # getCapture.join()
+            return (False, "{\"response_status\": \"200\",\"response_message\": \"Oke\", \"data\": {\"msg\": \"\"}}")
 
         content_type = self.headers['content-type']
         if not content_type:
